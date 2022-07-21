@@ -26,6 +26,9 @@ var _ Prompter = &PrompterMock{}
 // 			InputHostnameFunc: func() (string, error) {
 // 				panic("mock out the InputHostname method")
 // 			},
+// 			MarkdownEditorFunc: func(s1 string, s2 string, b bool) (string, error) {
+// 				panic("mock out the MarkdownEditor method")
+// 			},
 // 			MultiSelectFunc: func(s1 string, s2 string, strings []string) (int, error) {
 // 				panic("mock out the MultiSelect method")
 // 			},
@@ -50,6 +53,9 @@ type PrompterMock struct {
 
 	// InputHostnameFunc mocks the InputHostname method.
 	InputHostnameFunc func() (string, error)
+
+	// MarkdownEditorFunc mocks the MarkdownEditor method.
+	MarkdownEditorFunc func(s1 string, s2 string, b bool) (string, error)
 
 	// MultiSelectFunc mocks the MultiSelect method.
 	MultiSelectFunc func(s1 string, s2 string, strings []string) (int, error)
@@ -79,6 +85,15 @@ type PrompterMock struct {
 		// InputHostname holds details about calls to the InputHostname method.
 		InputHostname []struct {
 		}
+		// MarkdownEditor holds details about calls to the MarkdownEditor method.
+		MarkdownEditor []struct {
+			// S1 is the s1 argument value.
+			S1 string
+			// S2 is the s2 argument value.
+			S2 string
+			// B is the b argument value.
+			B bool
+		}
 		// MultiSelect holds details about calls to the MultiSelect method.
 		MultiSelect []struct {
 			// S1 is the s1 argument value.
@@ -103,12 +118,13 @@ type PrompterMock struct {
 			Strings []string
 		}
 	}
-	lockConfirm       sync.RWMutex
-	lockInput         sync.RWMutex
-	lockInputHostname sync.RWMutex
-	lockMultiSelect   sync.RWMutex
-	lockPassword      sync.RWMutex
-	lockSelect        sync.RWMutex
+	lockConfirm        sync.RWMutex
+	lockInput          sync.RWMutex
+	lockInputHostname  sync.RWMutex
+	lockMarkdownEditor sync.RWMutex
+	lockMultiSelect    sync.RWMutex
+	lockPassword       sync.RWMutex
+	lockSelect         sync.RWMutex
 }
 
 // Confirm calls ConfirmFunc.
@@ -204,6 +220,45 @@ func (mock *PrompterMock) InputHostnameCalls() []struct {
 	mock.lockInputHostname.RLock()
 	calls = mock.calls.InputHostname
 	mock.lockInputHostname.RUnlock()
+	return calls
+}
+
+// MarkdownEditor calls MarkdownEditorFunc.
+func (mock *PrompterMock) MarkdownEditor(s1 string, s2 string, b bool) (string, error) {
+	if mock.MarkdownEditorFunc == nil {
+		panic("PrompterMock.MarkdownEditorFunc: method is nil but Prompter.MarkdownEditor was just called")
+	}
+	callInfo := struct {
+		S1 string
+		S2 string
+		B  bool
+	}{
+		S1: s1,
+		S2: s2,
+		B:  b,
+	}
+	mock.lockMarkdownEditor.Lock()
+	mock.calls.MarkdownEditor = append(mock.calls.MarkdownEditor, callInfo)
+	mock.lockMarkdownEditor.Unlock()
+	return mock.MarkdownEditorFunc(s1, s2, b)
+}
+
+// MarkdownEditorCalls gets all the calls that were made to MarkdownEditor.
+// Check the length with:
+//     len(mockedPrompter.MarkdownEditorCalls())
+func (mock *PrompterMock) MarkdownEditorCalls() []struct {
+	S1 string
+	S2 string
+	B  bool
+} {
+	var calls []struct {
+		S1 string
+		S2 string
+		B  bool
+	}
+	mock.lockMarkdownEditor.RLock()
+	calls = mock.calls.MarkdownEditor
+	mock.lockMarkdownEditor.RUnlock()
 	return calls
 }
 

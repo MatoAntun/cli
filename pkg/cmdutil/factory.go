@@ -20,7 +20,6 @@ type Browser interface {
 // TODO fix current breaking tests
 // TODO add Editor
 // TODO linter warning for using the prompt package
-// TODO test on windows
 
 //go:generate moq -rm -out prompter_mock.go . Prompter
 type Prompter interface {
@@ -30,7 +29,7 @@ type Prompter interface {
 	InputHostname() (string, error)
 	Password(string) (string, error)
 	Confirm(string, bool) (bool, error)
-	// TODO single Editor based on GhEditor
+	MarkdownEditor(string, string, bool) (string, error)
 }
 
 type Factory struct {

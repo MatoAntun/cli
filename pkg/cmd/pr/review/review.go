@@ -14,7 +14,6 @@ import (
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/cli/v2/pkg/markdown"
 	"github.com/cli/cli/v2/pkg/prompt"
-	"github.com/cli/cli/v2/pkg/surveyext"
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +21,7 @@ type ReviewOptions struct {
 	HttpClient func() (*http.Client, error)
 	Config     func() (config.Config, error)
 	IO         *iostreams.IOStreams
+	Prompter   cmdutil.Prompter
 
 	Finder shared.PRFinder
 
@@ -36,6 +36,7 @@ func NewCmdReview(f *cmdutil.Factory, runF func(*ReviewOptions) error) *cobra.Co
 		IO:         f.IOStreams,
 		HttpClient: f.HttpClient,
 		Config:     f.Config,
+		Prompter:   f.Prompter,
 	}
 
 	var (
@@ -160,7 +161,7 @@ func reviewRun(opts *ReviewOptions) error {
 		if err != nil {
 			return err
 		}
-		reviewData, err = reviewSurvey(opts.IO, editorCommand)
+		reviewData, err = reviewSurvey(opts, editorCommand)
 		if err != nil {
 			return err
 		}
@@ -204,7 +205,8 @@ func reviewRun(opts *ReviewOptions) error {
 	return nil
 }
 
-func reviewSurvey(io *iostreams.IOStreams, editorCommand string) (*api.PullRequestReviewInput, error) {
+func reviewSurvey(opts *ReviewOptions, editorCommand string) (*api.PullRequestReviewInput, error) {
+	io := opts.IO
 	typeAnswers := struct {
 		ReviewType string
 	}{}
@@ -249,24 +251,12 @@ func reviewSurvey(io *iostreams.IOStreams, editorCommand string) (*api.PullReque
 		blankAllowed = true
 	}
 
-	bodyQs := []*survey.Question{
-		{
-			Name: "body",
-			Prompt: &surveyext.GhEditor{
-				BlankAllowed:  blankAllowed,
-				EditorCommand: editorCommand,
-				Editor: &survey.Editor{
-					Message:  "Review body",
-					FileName: "*.md",
-				},
-			},
-		},
-	}
-
-	err = prompt.SurveyAsk(bodyQs, &bodyAnswers)
+	body, err := opts.Prompter.MarkdownEditor("Review body", "", blankAllowed)
 	if err != nil {
 		return nil, err
 	}
+
+	bodyAnswers.Body = body
 
 	if bodyAnswers.Body == "" && (reviewState == api.ReviewComment || reviewState == api.ReviewRequestChanges) {
 		return nil, errors.New("this type of review cannot be blank")
