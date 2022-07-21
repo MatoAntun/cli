@@ -20,6 +20,7 @@ import (
 func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 	m := f.ExtensionManager
 	io := f.IOStreams
+	prompter := f.Prompter
 
 	extCmd := cobra.Command{
 		Use:   "extension",
@@ -244,11 +245,8 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 		},
 		func() *cobra.Command {
 			promptCreate := func() (string, extensions.ExtTemplateType, error) {
-				var extName string
 				var extTmplType int
-				err := prompt.SurveyAskOne(&survey.Input{
-					Message: "Extension name:",
-				}, &extName)
+				extName, err := prompter.Input("Extension name:", "")
 				if err != nil {
 					return extName, -1, err
 				}
