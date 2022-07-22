@@ -18,7 +18,6 @@ type Browser interface {
 }
 
 // TODO fix current breaking tests
-// TODO add Editor
 // TODO linter warning for using the prompt package
 
 //go:generate moq -rm -out prompter_mock.go . Prompter
